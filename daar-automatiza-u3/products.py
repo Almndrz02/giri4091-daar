@@ -4,41 +4,52 @@ import json
 def GetAllProducts():
     url = 'https://fakestoreapi.com/products/' 
     respuesta = requests.get(url).json() 
+    print('--------------------')
     print("Listado de productos")
     print('--------------------')
     print(json.dumps(respuesta, indent=4,ensure_ascii=False)) 
-
+    print('--------------------')
 
 def GetProduct():
     url_base = 'https://fakestoreapi.com/products'
     print("Búsqueda de producto")
     
-    # Solicitar el ID del producto al usuario
-    product_id = input("Ingrese el ID del producto que desea consultar: ")
+    try:
+        # Solicitar el ID del producto al usuario
+        product_id = input("Ingrese el ID del producto que desea consultar: ")
+        
+        # Enviar la solicitud GET para obtener los detalles del producto
+        url = f"{url_base}/{product_id}"
+        response = requests.get(url)
+        
+        # Verificar el código de estado de la respuesta
+        if response.status_code == 200:
+            producto = response.json()
+            print('--------------------')
+            print("Detalles del producto")
+            print('--------------------')
+            print(json.dumps(producto, indent=4, ensure_ascii=False))
+            print("-----------------------")
+        else:
+            print("Error al obtener el producto:", response.status_code)
     
-    # Enviar la solicitud GET para obtener los detalles del producto
-    url = f"{url_base}/{product_id}"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        producto = response.json()
-        print("Detalles del producto")
-        print('--------------------')
-        print(json.dumps(producto, indent=4, ensure_ascii=False))
-    else:
-        print("Error al obtener el producto:", response.status_code)
-
+    except requests.exceptions.JSONDecodeError as e:
+        print("-----------------------")
+        print(f"Producnto no encontrado")
+        print("-----------------------")
     
 def AddProduct():
     url = 'https://fakestoreapi.com/products'
     print("Agregar producto")
     
     # Solicitar detalles del nuevo producto al usuario
+    print('--------------------')
     title = input("Ingrese el título del producto: ")
     price = float(input("Ingrese el precio del producto: "))
     description = input("Ingrese la descripción del producto: ")
     image = input("Ingrese la URL de la imagen del producto: ")
     category = input("Ingrese la categoría del producto: ")
+    print('--------------------')
     
     # Crear un diccionario con los datos del nuevo producto
     nuevo_producto = {
@@ -53,10 +64,14 @@ def AddProduct():
     response = requests.post(url, json=nuevo_producto)
     
     if response.status_code == 200 or response.status_code == 201:
+        print('-------------------------------')
         print("Producto agregado exitosamente!")
+        print('-------------------------------')
         print(json.dumps(response.json(), indent=4, ensure_ascii=False))
     else:
+        print('--------------------')
         print("Error al agregar el producto:", response.status_code)
+        print('--------------------')
 
 def UpdateProduct():
     url_base = 'https://fakestoreapi.com/products'
@@ -86,27 +101,60 @@ def UpdateProduct():
     response = requests.put(url, json=producto_actualizado)
     
     if response.status_code == 200:
+        print('--------------------')
         print("Producto modificado exitosamente!")
+        print('--------------------')
         print(json.dumps(response.json(), indent=4, ensure_ascii=False))
+        print('--------------------')
     else:
-        print("Error al modificar el producto:", response.status_code)  
+        print('--------------------')
+        print("Error al modificar el producto:", response.status_code)
+        print('--------------------')
 
 
 def DeleteProduct():
     url_base = 'https://fakestoreapi.com/products'
     print("Eliminación de producto")
     
-    # Solicitar el ID del producto a eliminar
-    product_id = input("Ingrese el ID del producto que desea eliminar: ")
+    try:
+        # Solicitar el ID del producto a eliminar
+        product_id = input("Ingrese el ID del producto que desea eliminar: ")
+        
+        # Verificar si el producto existe
+        check_url = f"{url_base}/{product_id}"
+        check_response = requests.get(check_url)
+        
+        if check_response.status_code != 200:
+            print('--------------------')
+            print("El producto no existe.")
+            print('--------------------')
+            return
+        
+        # Enviar la solicitud DELETE
+        delete_response = requests.delete(check_url)
+        
+        # Verificar el código de estado de la respuesta
+        if delete_response.status_code == 200:
+            print('--------------------')
+            print("Producto eliminado exitosamente!")
+            print('--------------------')
+        else:
+            print('--------------------')
+            print("Error al eliminar el producto:", delete_response.status_code)
+            print('--------------------')
     
-    # Enviar la solicitud DELETE
-    url = f"{url_base}/{product_id}"
-    response = requests.delete(url)
-    
-    if response.status_code == 200:
-        print("Producto eliminado exitosamente!")
-    else:
-        print("Error al eliminar el producto:", response.status_code)
+    except requests.exceptions.RequestException as e:
+        print('--------------------')
+        print(f"Error de conexión: {e}")
+        print('--------------------')
+    except ValueError:
+        print('--------------------')
+        print("Error al procesar la respuesta del servidor.")
+        print('--------------------')
+    except Exception as e:
+        print('--------------------')
+        print(f"Ocurrió un error inesperado: {e}")
+        print('--------------------')
 
 
 def mostrar_menu():
