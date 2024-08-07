@@ -3,64 +3,69 @@ import requests
 
 app = Flask(__name__)
 
+# URL de la API FAKE
 URL = "https://fakestoreapi.com/products"
 
+
+products = requests.get(URL).json()
+
+#Listar productos
 @app.route('/products', methods=['GET'])
 def get_products():
-    try:
-        response = requests.get(URL)
-        response.raise_for_status()  # Esto lanzará una excepción si la solicitud fue insatisfactoria
-        products = response.json()
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
-
     return jsonify(products)
 
-@app.route('/products/<int:product_id>', methods=['GET'])
-def get_product_id(product_id):
-    try:
-        response = requests.get(f"{URL}/{product_id}")
-        response.raise_for_status()
-        product = response.json()
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+def get_element(product_id):
+    isFound = False
+    for product in products:
+        if product["id"] == product_id:
+            isFound = True
+            return product 
+    return None  
 
+#Listar productos por id
+@app.route('/products/<int:product_id>', methods=['GET'])
+def get_product(product_id):
+    product = get_element(product_id)
+    print(product)  
+    if product is None:
+        return jsonify({"error": "Producto no encontrado"}), 404
     return jsonify(product)
 
+def max_id():
+    maximo = products[0]['id']
+    for product in products:
+        if product['id'] > maximo:
+            maximo = product['id']
+    return maximo
+
+#Metodo agregar un nuevo producto
 @app.route('/products', methods=['POST'])
-def add_product():
-    new_product = request.json
-    try:
-        response = requests.post(URL, json=new_product)
-        response.raise_for_status()
-        added_product = response.json()
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+def create_product():
+    data = request.get_json() 
+    product_id = max_id() + 1  
+    data['id'] = product_id  
+    products.append(data)  
+    return jsonify(data), 201  
 
-    return jsonify(added_product), 201
-
+#Metodo eliminar un producto
 @app.route('/products/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    try:
-        response = requests.delete(f"{URL}/{product_id}")
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
-
+    global products
+    product = get_element(product_id)
+    if product is None:
+        return jsonify({"error": "Producto no encontrado"}), 404
+    products = [p for p in products if p['id'] != product_id]
     return jsonify({"message": "Producto eliminado correctamente"}), 200
 
+#Metodo modificar un producto
 @app.route('/products/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
-    updated_product = request.json
-    try:
-        response = requests.put(f"{URL}/{product_id}", json=updated_product)
-        response.raise_for_status()
-        product = response.json()
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
-
+    data = request.get_json()
+    product = get_element(product_id)
+    if product is None:
+        return jsonify({"error": "Producto no encontrado"}), 404
+    product.update(data)
     return jsonify(product)
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
