@@ -13,7 +13,9 @@ def GetAllProducts():
 def GetProduct():
     url_base = 'https://fakestoreapi.com/products'
     print("Búsqueda de producto")
-    
+    print('--------------------')
+
+
     try:
         # Solicitar el ID del producto al usuario
         product_id = input("Ingrese el ID del producto que desea consultar: ")
@@ -31,16 +33,18 @@ def GetProduct():
             print(json.dumps(producto, indent=4, ensure_ascii=False))
             print("-----------------------")
         else:
-            print("Error al obtener el producto:", response.status_code)
+            print("Producto no encontrado")
     
     except requests.exceptions.JSONDecodeError as e:
         print("-----------------------")
-        print(f"Producnto no encontrado")
+        print(f"Producto no encontrado")
         print("-----------------------")
     
 def AddProduct():
     url = 'https://fakestoreapi.com/products'
     print("Agregar producto")
+    print('----------------')
+
     
     # Solicitar detalles del nuevo producto al usuario
     print('--------------------')
@@ -49,7 +53,7 @@ def AddProduct():
     description = input("Ingrese la descripción del producto: ")
     image = input("Ingrese la URL de la imagen del producto: ")
     category = input("Ingrese la categoría del producto: ")
-    print('--------------------')
+    
     
     # Crear un diccionario con los datos del nuevo producto
     nuevo_producto = {
@@ -76,9 +80,25 @@ def AddProduct():
 def UpdateProduct():
     url_base = 'https://fakestoreapi.com/products'
     print("Modificar producto")
-    
-    # Solicitar el ID del producto a modificar
+    print('------------------')
+
+        # Solicitar el ID del producto a modificar
     product_id = input("Ingrese el ID del producto que desea modificar: ")
+        
+        # Verificar si el producto existe
+    url = f"{url_base}/{product_id}"
+    check_response = requests.get(url)
+    
+    try:
+        # Verificar si la respuesta no está vacía
+        if check_response.status_code == 404 or not check_response.text:
+            print('----------------------')
+            print("El producto no existe.")
+            print('----------------------')
+
+            return
+    except json.JSONDecodeError:
+        return
     
     # Solicitar los nuevos detalles del producto al usuario
     title = input("Ingrese el nuevo título del producto: ")
@@ -86,61 +106,60 @@ def UpdateProduct():
     description = input("Ingrese la nueva descripción del producto: ")
     image = input("Ingrese la nueva URL de la imagen del producto: ")
     category = input("Ingrese la nueva categoría del producto: ")
-    
-    # Crear un diccionario con los datos actualizados del producto
+        
+        # Crear un diccionario con los datos actualizados del producto
     producto_actualizado = {
-        'title': title,
-        'price': price,
-        'description': description,
-        'image': image,
-        'category': category
-    }
-    
-    # Enviar la solicitud PUT con los datos actualizados del producto
-    url = f"{url_base}/{product_id}"
+            'title': title,
+            'price': price,
+            'description': description,
+            'image': image,
+            'category': category
+        }
+        
+        # Enviar la solicitud PUT con los datos actualizados del producto
     response = requests.put(url, json=producto_actualizado)
-    
+        
     if response.status_code == 200:
-        print('--------------------')
-        print("Producto modificado exitosamente!")
-        print('--------------------')
-        print(json.dumps(response.json(), indent=4, ensure_ascii=False))
-        print('--------------------')
+            print('--------------------')
+            print("Producto modificado exitosamente!")
+            print('--------------------')
+            print(json.dumps(response.json(), indent=4, ensure_ascii=False))
+            print('--------------------')
     else:
-        print('--------------------')
-        print("Error al modificar el producto:", response.status_code)
-        print('--------------------')
+            print('--------------------')
+            print("Error al modificar el producto:", response.status_code)
+            print('--------------------')
 
 
 def DeleteProduct():
     url_base = 'https://fakestoreapi.com/products'
-    print("Eliminación de producto")
+    print("Eliminación de producto")  
+    print('-----------------------')
+  
     
+    # Solicitar el ID del producto a eliminar
+    product_id = input("Ingrese el ID del producto que desea eliminar: ")
+    url = f"{url_base}/{product_id}"
+        
     try:
-        # Solicitar el ID del producto a eliminar
-        product_id = input("Ingrese el ID del producto que desea eliminar: ")
-        
         # Verificar si el producto existe
-        check_url = f"{url_base}/{product_id}"
-        check_response = requests.get(check_url)
-        
-        if check_response.status_code != 200:
-            print('--------------------')
-            print("El producto no existe.")
-            print('--------------------')
+        check_response = requests.get(url)
+        if check_response.status_code == 404:
+            print("El producto no existe, no se puede eliminar.")
             return
         
         # Enviar la solicitud DELETE
-        delete_response = requests.delete(check_url)
+        if check_response.text:
+            response = requests.delete(url)
         
         # Verificar el código de estado de la respuesta
-        if delete_response.status_code == 200:
-            print('--------------------')
+        if response.status_code == 200 or response.status_code == 204:
+            print('--------------------------------')
             print("Producto eliminado exitosamente!")
-            print('--------------------')
+            print('--------------------------------')
         else:
             print('--------------------')
-            print("Error al eliminar el producto:", delete_response.status_code)
+            print("Error al eliminar el producto:", check_response.status_code)
             print('--------------------')
     
     except requests.exceptions.RequestException as e:
@@ -151,10 +170,10 @@ def DeleteProduct():
         print('--------------------')
         print("Error al procesar la respuesta del servidor.")
         print('--------------------')
-    except Exception as e:
-        print('--------------------')
-        print(f"Ocurrió un error inesperado: {e}")
-        print('--------------------')
+    except Exception:
+        print('----------------------')
+        print(f"El producto no existe")
+        print('----------------------')
 
 
 def mostrar_menu():
@@ -186,3 +205,5 @@ while True:
         break
     else:
         print("Opción no válida, por favor intenta de nuevo.")
+
+
